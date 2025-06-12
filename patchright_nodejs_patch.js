@@ -56,12 +56,12 @@ clientBrowserContextInstallInjectRouteMethod.setBodyText(`if (this.routeInjectin
     try {
       if (route.request().resourceType() === 'document' && route.request().url().startsWith('http')) {
           const protocol = route.request().url().split(':')[0];
-          await route.continue({ url: protocol + '://patchright-init-script-inject.internal/' });
+          await route.fallback({ url: protocol + '://patchright-init-script-inject.internal/' });
       } else {
-          await route.continue();
+          await route.fallback();
       }
   } catch (error) {
-      await route.continue();
+      await route.fallback();
   }
 });`);
 
@@ -101,12 +101,12 @@ await this.route('**/*', async route => {
   try {
     if (route.request().resourceType() === 'document' && route.request().url().startsWith('http')) {
         const protocol = route.request().url().split(':')[0];
-        await route.continue({ url: protocol + '://patchright-init-script-inject.internal/' });
+        await route.fallback({ url: protocol + '://patchright-init-script-inject.internal/' });
     } else {
-        await route.continue();
+        await route.fallback();
     }
 } catch (error) {
-    await route.continue();
+    await route.fallback();
   }
 });`);
 
