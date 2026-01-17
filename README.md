@@ -93,14 +93,29 @@ const { chromium } = require('patchright');
 
 ### Best Practice  - use Chrome without Fingerprint Injection
 
-To be completely undetected, use the following configuration:
+To be completely undetected, use `launchPersistentContext`.
+
 ```js
-chromium.launchPersistentContext("...", {
+const { chromium } = require('patchright');
+
+(async () => {
+  // 1. Setup a persistent directory for human-like session data
+  const userDataDir = './browser-session';
+
+  // 2. Launch with the 'Best Practice' config
+  const context = await chromium.launchPersistentContext(userDataDir, {
     channel: "chrome",
     headless: false,
     viewport: null,
     // do NOT add custom browser headers or userAgent
-});
+  });
+
+  // 3. Get the page that is automatically opened
+  const page = context.pages()[0] || await context.newPage();
+
+  await page.goto('https://example.com');
+  // ... your actions
+})();
 ```
 
 > [!NOTE]
