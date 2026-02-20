@@ -41,11 +41,11 @@ jobs:
     name: "Patchright-NodeJS Workflow: Install, Patch, Build and Publish Patchright Driver"
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node v18
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - name: Setup Node v24
+        uses: actions/setup-node@v6
         with:
-          node-version: 18
+          node-version: 24
           registry-url: 'https://registry.npmjs.org'
       - name: Install TS-Morph
         run: npm install
@@ -55,7 +55,7 @@ jobs:
         run: |
           echo "patchright_release=${{ github.event.inputs.patchright_release }}" >> $GITHUB_ENV
           if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "proceed=true" >>$GITHUB_OUTPUT
+            echo "proceed=true" >> $GITHUB_OUTPUT
             echo "playwright_version=${{ github.event.inputs.version }}" >> $GITHUB_ENV
           else
             chmod +x utils/release_version_check.sh
@@ -65,7 +65,7 @@ jobs:
       - name: Install Playwright-NodeJS Package
         if: steps.version_check.outputs.proceed == 'true'
         run: |
-          git clone https://github.com/microsoft/playwright  --branch ${{ env.playwright_version }}
+          git clone https://github.com/microsoft/playwright --branch ${{ env.playwright_version }}
           cd playwright
           npm ci
 
@@ -119,14 +119,10 @@ jobs:
         if: steps.version_check.outputs.proceed == 'true'
         run: |
           cd playwright/packages/patchright-core/
-          npm publish --access=public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --access=public
 
       - name: Publish Patchright Package
         if: steps.version_check.outputs.proceed == 'true'
         run: |
           cd playwright/packages/patchright/
-          npm publish --access=public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --access=public
