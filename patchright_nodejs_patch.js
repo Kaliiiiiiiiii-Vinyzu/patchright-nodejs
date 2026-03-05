@@ -1,6 +1,5 @@
 import fs from "node:fs/promises";
-import path from 'path';
-import { Project, SyntaxKind, IndentationText, ObjectLiteralExpression } from "ts-morph";
+import { Project, SyntaxKind, IndentationText } from "ts-morph";
 import YAML from "yaml";
 
 import * as patches from "./driver_patches/index.js";
@@ -10,8 +9,6 @@ const project = new Project({
     indentationText: IndentationText.TwoSpaces,
   },
 });
-
-
 
 // ----------------------------
 // client/clientHelper.ts
@@ -68,7 +65,25 @@ clientBrowserContextInstallInjectRouteMethod.setBodyText(`
         await route.fallback();
     }
   });
+  this.routeInjecting = true;
 `);
+
+// -- constructor: wrap auto-dismiss dialog in internal zone to avoid trace pollution --
+// Patchright always dispatches dialog events to the client (server patch). When no listener
+// is attached, the client auto-dismisses. Without this patch, the auto-dismiss creates a
+// "Dismiss dialog" trace entry. Wrapping in _wrapApiCall({ internal: true }) suppresses it.
+{
+  let sourceText = clientBrowserContextSourceFile.getFullText();
+  sourceText = sourceText.replace(
+    "dialog.accept({}).catch(() => {});",
+    "dialogObject._wrapApiCall(() => dialog.accept({}).catch(() => {}), { internal: true });"
+  );
+  sourceText = sourceText.replace(
+    "dialog.dismiss().catch(() => {});",
+    "dialogObject._wrapApiCall(() => dialog.dismiss().catch(() => {}), { internal: true });"
+  );
+  clientBrowserContextSourceFile.replaceWithText(sourceText);
+}
 
 // ----------------------------
 // client/page.ts
@@ -115,6 +130,7 @@ clientPageInstallInjectRouteMethod.setBodyText(`
       await route.fallback();
     }
   });
+  this.routeInjecting = true;
 `);
 
 // -- evaluate Method --
@@ -258,6 +274,21 @@ const frameSourceFile = project.addSourceFileAtPath(
 );
 // ------- Frame Class -------
 const clientFrameClass = frameSourceFile.getClass("Frame");
+// -- waitForURL Method --
+const frameWaitForURLMethod = clientFrameClass.getMethod("waitForURL");
+frameWaitForURLMethod.setBodyText(`
+  if (urlMatches(this._page?.context()._options.baseURL, this.url(), url))
+    return await this.waitForLoadState(options.waitUntil, options);
+  try {
+    await this.waitForNavigation({ url, ...options });
+  } catch (error) {
+    if (urlMatches(this._page?.context()._options.baseURL, this.url(), url)) {
+      await this.waitForLoadState(options.waitUntil, options);
+      return;
+    }
+    throw error;
+  }
+`);
 // -- evaluate Method --
 const frameEvaluateMethod = clientFrameClass.getMethod("evaluate");
 frameEvaluateMethod.addParameter({
@@ -367,6 +398,10 @@ locatorEvaluateMethod.addParameter({
   initializer: "true",
 });
 locatorEvaluateMethod.setBodyText(`
+  if (typeof options === 'boolean') {
+    isolatedContext = options;
+    options = undefined;
+  }
   return await this._withElement(
     async (h) =>
       parseResult(
@@ -391,6 +426,10 @@ locatorEvaluateHandleMethod.addParameter({
   initializer: "true",
 });
 locatorEvaluateHandleMethod.setBodyText(`
+  if (typeof options === 'boolean') {
+    isolatedContext = options;
+    options = undefined;
+  }
   return await this._withElement(
     async (h) =>
       JSHandle.from(
@@ -459,9 +498,8 @@ const tracingSourceFile = project.addSourceFileAtPath(
 const clientTracingClass = tracingSourceFile.getClass("Tracing");
 // -- start Method --
 const tracingStartMethod = clientTracingClass.getMethod("start");
-tracingStartMethod.insertStatements(0, "await this._parent.installInjectRoute();");
+tracingStartMethod.insertStatements(0, "if (typeof this._parent.installInjectRoute === 'function') await this._parent.installInjectRoute();");
 
 // Here the Driver Patch will be added by fetching the code from the main Driver Repository (in the workflow).
 // The URL from which the code is added is: https://raw.githubusercontent.com/Kaliiiiiiiiii-Vinyzu/patchright/refs/heads/main/patchright_driver_patch.js
 // Note: The Project is also synced (saved) in this code, so we dont need to add it here.
-
