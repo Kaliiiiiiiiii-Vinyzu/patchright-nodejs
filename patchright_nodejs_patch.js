@@ -86,6 +86,32 @@ clientBrowserContextInstallInjectRouteMethod.setBodyText(`
 }
 
 // ----------------------------
+// client/network.ts
+// ----------------------------
+const clientNetworkSourceFile = project.addSourceFileAtPath(
+  "packages/playwright-core/src/client/network.ts"
+);
+// Imports
+const targetClosedImport = clientNetworkSourceFile.getImportDeclaration(
+  (decl) => decl.getModuleSpecifierValue() === "./errors"
+);
+if (targetClosedImport && !targetClosedImport.getNamedImports().some(i => i.getName() === "TargetClosedError")) {
+  targetClosedImport.addNamedImport("TargetClosedError");
+}
+
+// ------- Request Class -------
+const requestClass = clientNetworkSourceFile.getClass("Request");
+// -- allHeaders Method --
+const allHeadersMethod = requestClass.getMethod("allHeaders");
+allHeadersMethod.setBodyText(`
+  const headers = await this._actualHeaders();
+  const page = this._safePage();
+  if (page?._closeWasCalled)
+    throw new TargetClosedError();
+  return headers.headers();
+`);
+
+// ----------------------------
 // client/page.ts
 // ----------------------------
 const clientPageSourceFile = project.addSourceFileAtPath(
