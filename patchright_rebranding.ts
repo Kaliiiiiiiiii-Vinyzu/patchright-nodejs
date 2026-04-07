@@ -141,7 +141,7 @@ export function patchRebranding(): void {
 
 			fs.writeFileSync(
 				"packages/patchright-core/README.md",
-				"# patchright-core\n\nThis package contains the no-browser flavor of [Patchright-NodeJS](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs).",
+				"# patchright-core\n\nThis package contains the no-browser flavor of [Patchright](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright).",
 				"utf8",
 			);
 
@@ -157,8 +157,8 @@ export function patchRebranding(): void {
 					}
 
 					packageJson.author["name"] = "Microsoft Corportation, patched by github.com/Kaliiiiiiiiii-Vinyzu/";
-					packageJson.homepage = "https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs";
-					packageJson.repository["url"] = "https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs";
+					packageJson.homepage = "https://github.com/Kaliiiiiiiiii-Vinyzu/patchright";
+					packageJson.repository["url"] = "https://github.com/Kaliiiiiiiiii-Vinyzu/patchright";
 					packageJson.bin = {
 						"patchright-core": "cli.js",
 					};
@@ -188,8 +188,8 @@ export function patchRebranding(): void {
 				}
 
 				packageJson.author["name"] = "Microsoft Corportation, patched by github.com/Kaliiiiiiiiii-Vinyzu/";
-				packageJson.homepage = "https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs";
-				packageJson.repository["url"] = "https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs";
+				packageJson.homepage = "https://github.com/Kaliiiiiiiiii-Vinyzu/patchright";
+				packageJson.repository["url"] = "https://github.com/Kaliiiiiiiiii-Vinyzu/patchright";
 				packageJson.bin = {
 					patchright: "cli.js",
 				};
