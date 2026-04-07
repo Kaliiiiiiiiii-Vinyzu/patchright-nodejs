@@ -13,12 +13,10 @@
     <a>
         <img src="https://img.shields.io/badge/Driver-Patched-blue">
     </a>
-    <a href="https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-python/actions/workflows/patchright_tests.yml">
-        <img src="https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-python/actions/workflows/patchright_tests.yml/badge.svg">
-    </a>
+    <img src="https://img.shields.io/github/actions/workflow/status/Kaliiiiiiiiii-Vinyzu/patchright/patchright_tests.yml?label=Patchright%20Driver%20Tests">
     <br/>
     <a href="https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs/releases/latest">
-        <img alt="Patchright Version" src="https://img.shields.io/github/v/release/microsoft/playwright?display_name=release&label=Version">
+        <img alt="Patchright Version" src="https://img.shields.io/github/v/release/Kaliiiiiiiiii-Vinyzu/patchright?display_name=release&label=Version">
     </a>
     <a href="https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs">
         <img src="https://img.shields.io/badge/Package-NodeJS-seagreen">

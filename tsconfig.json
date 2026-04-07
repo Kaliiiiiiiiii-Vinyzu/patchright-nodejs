@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+    "allowImportingTsExtensions": true,
+    "allowJs": true,
+    "checkJs": false,
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": [
+    "client_patches/*.ts",
+    "patchright_rebranding.ts",
+  ]
+}

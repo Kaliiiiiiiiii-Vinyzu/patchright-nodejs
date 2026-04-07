@@ -1,6 +1,16 @@
 {
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "format:check": "bash -c 'biome check --line-width=320 --formatter-enabled=false --diagnostic-level=error ${@:-patchright_rebranding.ts client_patches/}' --"
+    },
     "devDependencies": {
-        "ts-morph": "^23.0.0",
+        "@biomejs/biome": "^2.4.10",
+        "@types/node": "^25.5.0",
+        "glob": "^13.0.6",
+        "prettier": "^3.0.0",
+        "ts-morph": "^27.0.2",
+        "tsx": "^4.21.0",
+        "typescript": "^6.0.2",
         "yaml": "^2.7.0"
     },
     "type": "module"
