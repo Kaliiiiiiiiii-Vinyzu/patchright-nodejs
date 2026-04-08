@@ -35,8 +35,7 @@ export function patchPage(project: Project) {
 		await this.route('**/*', async route => {
 			try {
 				if (route.request().resourceType() === 'document' && route.request().url().startsWith('http')) {
-						const protocol = route.request().url().split(':')[0];
-						await route.fallback({ url: protocol + '://patchright-init-script-inject.internal/' });
+						await route.fallback({ patchrightInitScript: true } as any);
 				} else {
 						await route.fallback();
 				}
