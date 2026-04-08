@@ -104,12 +104,16 @@ function renameImportsAndExportsInDirectory(directoryPath: string): void {
 			modified = true;
 		});
 
-		const requireCalls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression).filter(call => {
+		const moduleLoaderCalls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression).filter(call => {
 			const expression = call.getExpression();
-			return expression.getText() === "require" || expression.getText() === "require.resolve";
+			return (
+				expression.getText() === "require" ||
+				expression.getText() === "require.resolve" ||
+				expression.isKind(SyntaxKind.ImportKeyword)
+			);
 		});
 
-		requireCalls.forEach(call => {
+		moduleLoaderCalls.forEach(call => {
 			const args = call.getArguments();
 
 			if (args.length && args[0].getText().includes("playwright-core")) {
