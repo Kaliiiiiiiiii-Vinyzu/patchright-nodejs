@@ -119,6 +119,7 @@ chromium.launchPersistentContext("...", {
     channel: "chrome",
     headless: false,
     viewport: null,
+    args: ["--disable-blink-features=AutomationControlled"],
     // do NOT add custom browser headers or userAgent
 });
 ```
