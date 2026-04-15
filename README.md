@@ -15,8 +15,8 @@
     </a>
     <img src="https://img.shields.io/github/actions/workflow/status/Kaliiiiiiiiii-Vinyzu/patchright/patchright_tests.yml?label=Patchright%20Driver%20Tests">
     <br/>
-    <a href="https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs/releases/latest">
-        <img alt="Patchright Version" src="https://img.shields.io/github/v/release/Kaliiiiiiiiii-Vinyzu/patchright?display_name=release&label=Version">
+    <a href="https://www.npmjs.com/package/patchright">
+        <img alt="npm version" src="https://img.shields.io/npm/v/patchright.svg">
     </a>
     <a href="https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs">
         <img src="https://img.shields.io/badge/Package-NodeJS-seagreen">
