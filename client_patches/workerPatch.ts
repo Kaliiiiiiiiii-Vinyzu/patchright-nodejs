@@ -1,5 +1,5 @@
 import { type Project, SyntaxKind } from "ts-morph";
-import { assertDefined } from "./utils.ts";
+import { addChannelCallProperty, assertDefined, bumpAssertMaxArguments } from "./utils.ts";
 
 // ----------------
 // client/worker.ts
@@ -24,20 +24,15 @@ export function patchWorker(project: Project) {
 			node.getText().includes("assertMaxArguments")
 		)
 	);
-	evaluateAssertCall.replaceWithText(evaluateAssertCall.getText().replace("2", "3"));
+	bumpAssertMaxArguments(evaluateAssertCall.asKindOrThrow(SyntaxKind.CallExpression));
 	// Modify the function call inside the return statement to include 'isolatedContext'
 	const evaluateExpressionCall = assertDefined(
 		evaluateMethod.getFirstDescendant(node =>
 			node.isKind(SyntaxKind.CallExpression) &&
 			node.getText().includes("this._channel.evaluateExpression")
 		)
-	);
-	evaluateExpressionCall.replaceWithText(
-		evaluateExpressionCall.getText().replace(
-			/(\{[\s\S]*?arg:\s*serializeArgument\(arg\))/,
-			"$1, isolatedContext: isolatedContext"
-		)
-	);
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	addChannelCallProperty(evaluateExpressionCall, "isolatedContext", "isolatedContext");
 	
 	// -- evaluateHandle Method --
 	const evaluateHandleMethod = workerClass.getMethodOrThrow("evaluateHandle");
@@ -52,18 +47,13 @@ export function patchWorker(project: Project) {
 			node.getText().includes("assertMaxArguments")
 		)
 	);
-	evaluateHandleAssertCall.replaceWithText(evaluateHandleAssertCall.getText().replace("2", "3"));
+	bumpAssertMaxArguments(evaluateHandleAssertCall.asKindOrThrow(SyntaxKind.CallExpression));
 	// Modify the function call inside the return statement to include 'isolatedContext'
 	const evaluateHandleExpressionCall = assertDefined(
 		evaluateHandleMethod.getFirstDescendant(node =>
 			node.isKind(SyntaxKind.CallExpression) &&
 			node.getText().includes("this._channel.evaluateExpression")
 		)
-	);
-	evaluateHandleExpressionCall.replaceWithText(
-		evaluateHandleExpressionCall.getText().replace(
-			/(\{[\s\S]*?arg:\s*serializeArgument\(arg\))/,
-			"$1, isolatedContext: isolatedContext"
-		)
-	);
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	addChannelCallProperty(evaluateHandleExpressionCall, "isolatedContext", "isolatedContext");
 }

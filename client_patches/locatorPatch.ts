@@ -37,7 +37,7 @@ export function patchLocator(project: Project) {
 							isFunction: typeof pageFunction === "function",
 							arg: serializeArgument(arg),
 							isolatedContext: isolatedContext,
-						})
+						}, kNoTimeout)
 					).value
 				),
 			{ title: "Evaluate", timeout: options?.timeout }
@@ -65,7 +65,7 @@ export function patchLocator(project: Project) {
 							isFunction: typeof pageFunction === "function",
 							arg: serializeArgument(arg),
 							isolatedContext: isolatedContext,
-						})
+						}, kNoTimeout)
 					).handle
 				) as any as structs.SmartHandle<R>,
 			{ title: "Evaluate", timeout: options?.timeout }

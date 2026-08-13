@@ -1,4 +1,5 @@
-import type { Project } from "ts-morph";
+import { type Project, SyntaxKind } from "ts-morph";
+import { addChannelCallProperty, assertDefined } from "./utils.ts";
 
 // ------------------
 // client/jsHandle.ts
@@ -11,21 +12,23 @@ export function patchJsHandle(project: Project) {
 	const jsHandleClass = jsHandleSourceFile.getClassOrThrow("JSHandle");
 
 	// -- evaluate Method --
+	// Note: we intentionally add the `isolatedContext` parameter and then only inject a single
+	// property into the existing `_channel.evaluateExpression(...)` call (via AST, not text
+	// replacement/full-body rewrite), so we don't clobber whatever upstream does around it
+	// (e.g. assertEvaluateOptions, serializeArgumentWithCallbacks, the `kNoTimeout` argument).
 	const evaluateMethod = jsHandleClass.getMethodOrThrow("evaluate");
 	evaluateMethod.addParameter({
 		name: "isolatedContext",
 		type: "boolean",
 		initializer: "true",
 	});
-  evaluateMethod.setBodyText(`
-    const result = await this._channel.evaluateExpression({
-      expression: String(pageFunction),
-      isFunction: typeof pageFunction === 'function',
-      arg: serializeArgument(arg),
-      isolatedContext: isolatedContext,
-    });
-    return parseResult(result.value);
-  `);
+	const evaluateExpressionCall = assertDefined(
+		evaluateMethod.getFirstDescendant(node =>
+			node.isKind(SyntaxKind.CallExpression) &&
+			node.getText().includes("this._channel.evaluateExpression")
+		)
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	addChannelCallProperty(evaluateExpressionCall, "isolatedContext", "isolatedContext");
 
 	// -- evaluateHandle Method --
 	const evaluateHandleMethod = jsHandleClass.getMethodOrThrow("evaluateHandle");
@@ -34,13 +37,11 @@ export function patchJsHandle(project: Project) {
 		type: "boolean",
 		initializer: "true",
 	});
-  evaluateHandleMethod.setBodyText(`
-    const result = await this._channel.evaluateExpressionHandle({
-      expression: String(pageFunction),
-      isFunction: typeof pageFunction === 'function',
-      arg: serializeArgument(arg),
-      isolatedContext: isolatedContext,
-    });
-    return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
-  `);
+	const evaluateHandleExpressionCall = assertDefined(
+		evaluateHandleMethod.getFirstDescendant(node =>
+			node.isKind(SyntaxKind.CallExpression) &&
+			node.getText().includes("this._channel.evaluateExpression")
+		)
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	addChannelCallProperty(evaluateHandleExpressionCall, "isolatedContext", "isolatedContext");
 }

@@ -1,5 +1,5 @@
 import { type Project, SyntaxKind } from "ts-morph";
-import { assertDefined } from "./utils.ts";
+import { addChannelCallProperty, assertDefined, bumpAssertMaxArguments } from "./utils.ts";
 
 // ---------------
 // client/frame.ts
@@ -39,21 +39,16 @@ export function patchFrame(project: Project) {
 			node.isKind(SyntaxKind.CallExpression) &&
 			node.getText().includes("assertMaxArguments")
 		)
-	);
-	evaluateAssertCall.replaceWithText(evaluateAssertCall.getText().replace("2", "3"));
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	bumpAssertMaxArguments(evaluateAssertCall);
 	// Modify the function call inside the return statement to include 'isolatedContext'
 	const evaluateExpressionCall = assertDefined(
 		evaluateMethod.getFirstDescendant(node =>
 			node.isKind(SyntaxKind.CallExpression) &&
 			node.getText().includes("this._channel.evaluateExpression")
 		)
-	);
-	evaluateExpressionCall.replaceWithText(
-		evaluateExpressionCall.getText().replace(
-			/(\{[\s\S]*?arg:\s*serializeArgument\(arg\))/,
-			"$1, isolatedContext: isolatedContext"
-		)
-	);
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	addChannelCallProperty(evaluateExpressionCall, "isolatedContext", "isolatedContext");
 
 	// -- evaluateHandle Method --
 	const evaluateHandleMethod = frameClass.getMethodOrThrow("evaluateHandle");
@@ -67,21 +62,16 @@ export function patchFrame(project: Project) {
 			node.isKind(SyntaxKind.CallExpression) &&
 			node.getText().includes("assertMaxArguments")
 		)
-	);
-	evaluateHandleAssertCall.replaceWithText(evaluateHandleAssertCall.getText().replace("2", "3"));
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	bumpAssertMaxArguments(evaluateHandleAssertCall);
 	// Modify the function call inside the return statement to include 'isolatedContext'
 	const evaluateHandleExpressionCall = assertDefined(
 		evaluateHandleMethod.getFirstDescendant(node =>
 			node.isKind(SyntaxKind.CallExpression) &&
 			node.getText().includes("this._channel.evaluateExpression")
 		)
-	);
-	evaluateHandleExpressionCall.replaceWithText(
-		evaluateHandleExpressionCall.getText().replace(
-			/(\{[\s\S]*?arg:\s*serializeArgument\(arg\))/,
-			"$1, isolatedContext: isolatedContext"
-		)
-	);
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	addChannelCallProperty(evaluateHandleExpressionCall, "isolatedContext", "isolatedContext");
 
 	// -- $$eval Method --
 	const evalOnSelectorMethod = frameClass.getMethodOrThrow("$$eval");
@@ -95,19 +85,14 @@ export function patchFrame(project: Project) {
 			node.isKind(SyntaxKind.CallExpression) &&
 			node.getText().includes("assertMaxArguments")
 		)
-	);
-	evalOnSelectorAssertCall.replaceWithText(evalOnSelectorAssertCall.getText().replace("3", "4"));
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	bumpAssertMaxArguments(evalOnSelectorAssertCall);
 	// Modify the function call inside the return statement to include 'isolatedContext'
 	const evalOnSelectorExpressionCall = assertDefined(
 		evalOnSelectorMethod.getFirstDescendant(node =>
 			node.isKind(SyntaxKind.CallExpression) &&
 			node.getText().includes("this._channel.evalOnSelectorAll")
 		)
-	);
-	evalOnSelectorExpressionCall.replaceWithText(
-		evalOnSelectorExpressionCall.getText().replace(
-			/(\{[\s\S]*?arg:\s*serializeArgument\(arg\))/,
-			"$1, isolatedContext: isolatedContext"
-		)
-	);
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	addChannelCallProperty(evalOnSelectorExpressionCall, "isolatedContext", "isolatedContext");
 }
