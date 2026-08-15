@@ -1,5 +1,5 @@
 import { type Project, SyntaxKind } from "ts-morph";
-import { assertDefined } from "./utils.ts";
+import { assertDefined, bumpAssertMaxArguments } from "./utils.ts";
 
 // --------------
 // client/page.ts
@@ -58,18 +58,15 @@ export function patchPage(project: Project) {
 			node.isKind(SyntaxKind.CallExpression) &&
 			node.getText().includes("assertMaxArguments")
 		)
-	);
-	evaluateAssertCall.replaceWithText(evaluateAssertCall.getText().replace("2", "3"));
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	bumpAssertMaxArguments(evaluateAssertCall);
 	// Modify the function call inside the return statement to include 'isolatedContext'
-	const evaluateReturnStatement = assertDefined(
-		evaluateMethod.getFirstDescendant(node => node.isKind(SyntaxKind.ReturnStatement))
+	const evaluateMainFrameCall = assertDefined(
+		evaluateMethod
+			.getDescendantsOfKind(SyntaxKind.CallExpression)
+			.find(call => call.getExpression().getText() === "this._mainFrame.evaluate")
 	);
-	evaluateReturnStatement.replaceWithText(
-		evaluateReturnStatement.getText().replace(
-			"this._mainFrame.evaluate(pageFunction, arg)",
-			"this._mainFrame.evaluate(pageFunction, arg, isolatedContext)"
-		)
-	);
+	evaluateMainFrameCall.addArgument("isolatedContext");
 	
 	// -- evaluateHandle Method --
 	const evaluateHandleMethod = pageClass.getMethodOrThrow("evaluateHandle");
@@ -83,16 +80,13 @@ export function patchPage(project: Project) {
 			node.isKind(SyntaxKind.CallExpression) &&
 			node.getText().includes("assertMaxArguments")
 		)
-	);
-	evaluateHandleAssertCall.replaceWithText(evaluateHandleAssertCall.getText().replace("2", "3"));
+	).asKindOrThrow(SyntaxKind.CallExpression);
+	bumpAssertMaxArguments(evaluateHandleAssertCall);
 	// Modify the function call inside the return statement to include 'isolatedContext'
-	const evaluateHandleReturnStatement = assertDefined(
-		evaluateHandleMethod.getFirstDescendant(node => node.isKind(SyntaxKind.ReturnStatement))
+	const evaluateHandleMainFrameCall = assertDefined(
+		evaluateHandleMethod
+			.getDescendantsOfKind(SyntaxKind.CallExpression)
+			.find(call => call.getExpression().getText() === "this._mainFrame.evaluateHandle")
 	);
-	evaluateHandleReturnStatement.replaceWithText(
-		evaluateHandleReturnStatement.getText().replace(
-			"this._mainFrame.evaluateHandle(pageFunction, arg)",
-			"this._mainFrame.evaluateHandle(pageFunction, arg, isolatedContext)"
-		)
-	);
+	evaluateHandleMainFrameCall.addArgument("isolatedContext");
 }

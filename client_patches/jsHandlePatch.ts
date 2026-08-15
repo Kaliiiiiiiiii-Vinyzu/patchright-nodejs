@@ -1,4 +1,5 @@
-import type { Project } from "ts-morph";
+import { type Project, SyntaxKind } from "ts-morph";
+import { addChannelCallProperty, assertDefined } from "./utils.ts";
 
 // ------------------
 // client/jsHandle.ts
@@ -17,15 +18,12 @@ export function patchJsHandle(project: Project) {
 		type: "boolean",
 		initializer: "true",
 	});
-  evaluateMethod.setBodyText(`
-    const result = await this._channel.evaluateExpression({
-      expression: String(pageFunction),
-      isFunction: typeof pageFunction === 'function',
-      arg: serializeArgument(arg),
-      isolatedContext: isolatedContext,
-    });
-    return parseResult(result.value);
-  `);
+	const evaluateExpressionCall = assertDefined(
+		evaluateMethod
+			.getDescendantsOfKind(SyntaxKind.CallExpression)
+			.find(call => call.getExpression().getText() === "this._channel.evaluateExpression")
+	);
+	addChannelCallProperty(evaluateExpressionCall, "isolatedContext", "isolatedContext");
 
 	// -- evaluateHandle Method --
 	const evaluateHandleMethod = jsHandleClass.getMethodOrThrow("evaluateHandle");
@@ -34,13 +32,20 @@ export function patchJsHandle(project: Project) {
 		type: "boolean",
 		initializer: "true",
 	});
-  evaluateHandleMethod.setBodyText(`
-    const result = await this._channel.evaluateExpressionHandle({
-      expression: String(pageFunction),
-      isFunction: typeof pageFunction === 'function',
-      arg: serializeArgument(arg),
-      isolatedContext: isolatedContext,
-    });
-    return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
-  `);
+	const evaluateHandleExpressionCall = assertDefined(
+		evaluateHandleMethod
+			.getDescendantsOfKind(SyntaxKind.CallExpression)
+			.find(call => call.getExpression().getText() === "this._channel.evaluateExpressionHandle")
+	);
+	addChannelCallProperty(evaluateHandleExpressionCall, "isolatedContext", "isolatedContext");
+
+	const serializerImport = jsHandleSourceFile.getImportDeclarationOrThrow("@isomorphic/utilityScriptSerializers");
+	serializerImport.getNamedImports().find(namedImport => namedImport.getName() === "kFunctionBindingPrefix")?.remove();
+	const serializeArgumentWithCallbacksFunction = jsHandleSourceFile.getFunctionOrThrow("serializeArgumentWithCallbacks");
+	const callbackNameDeclaration = assertDefined(
+		serializeArgumentWithCallbacksFunction
+			.getDescendantsOfKind(SyntaxKind.VariableDeclaration)
+			.find(declaration => declaration.getName() === "name")
+	);
+	callbackNameDeclaration.setInitializer("'f' + createGuid()");
 }

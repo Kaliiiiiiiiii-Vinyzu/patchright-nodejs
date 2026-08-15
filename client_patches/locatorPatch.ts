@@ -1,4 +1,5 @@
-import type { Project } from "ts-morph";
+import { type Project, SyntaxKind } from "ts-morph";
+import { assertDefined } from "./utils.ts";
 
 // -----------------
 // client/locator.ts
@@ -6,12 +7,6 @@ import type { Project } from "ts-morph";
 export function patchLocator(project: Project) {
 	// Add source file to the project
 	const locatorSourceFile = project.addSourceFileAtPath("packages/playwright-core/src/client/locator.ts");
-
-	// Add the custom import and comment at the start of the file
-	locatorSourceFile.addImportDeclaration({
-		namedImports: ["JSHandle", "parseResult", "serializeArgument"],
-		moduleSpecifier: "./jsHandle",
-	});
 
 	// ------- Locator Class -------
 	const locatorClass = locatorSourceFile.getClassOrThrow("Locator");
@@ -23,26 +18,12 @@ export function patchLocator(project: Project) {
 		type: "boolean",
 		initializer: "true",
 	});
-	evaluateMethod.setBodyText(`
-		if (typeof options === 'boolean') {
-			isolatedContext = options;
-			options = undefined;
-		}
-		return await this._withElement(
-			async (h) =>
-				parseResult(
-					(
-						await h._channel.evaluateExpression({
-							expression: String(pageFunction),
-							isFunction: typeof pageFunction === "function",
-							arg: serializeArgument(arg),
-							isolatedContext: isolatedContext,
-						})
-					).value
-				),
-			{ title: "Evaluate", timeout: options?.timeout }
-		);
-	`);
+	const evaluateCall = assertDefined(
+		evaluateMethod
+			.getDescendantsOfKind(SyntaxKind.CallExpression)
+			.find(call => call.getExpression().getText() === "h.evaluate")
+	);
+	evaluateCall.addArgument("isolatedContext");
 
 	// -- evaluateHandle Method --
 	const evaluateHandleMethod = locatorClass.getMethodOrThrow("evaluateHandle");
@@ -51,26 +32,12 @@ export function patchLocator(project: Project) {
 		type: "boolean",
 		initializer: "true",
 	});
-	evaluateHandleMethod.setBodyText(`
-		if (typeof options === 'boolean') {
-			isolatedContext = options;
-			options = undefined;
-		}
-		return await this._withElement(
-			async (h) =>
-				JSHandle.from(
-					(
-						await h._channel.evaluateExpressionHandle({
-							expression: String(pageFunction),
-							isFunction: typeof pageFunction === "function",
-							arg: serializeArgument(arg),
-							isolatedContext: isolatedContext,
-						})
-					).handle
-				) as any as structs.SmartHandle<R>,
-			{ title: "Evaluate", timeout: options?.timeout }
-		);
-	`);
+	const evaluateHandleCall = assertDefined(
+		evaluateHandleMethod
+			.getDescendantsOfKind(SyntaxKind.CallExpression)
+			.find(call => call.getExpression().getText() === "h.evaluateHandle")
+	);
+	evaluateHandleCall.addArgument("isolatedContext");
 
 	// -- evaluateAll Method --
 	const evaluateAllMethod = locatorClass.getMethodOrThrow("evaluateAll");
@@ -79,9 +46,10 @@ export function patchLocator(project: Project) {
 		type: "boolean",
 		initializer: "true",
 	});
-	evaluateAllMethod.setBodyText(`
-		return await this._frame.$$eval(this._selector, pageFunction, arg, isolatedContext);
-	`);
-
-
+	const evaluateAllCall = assertDefined(
+		evaluateAllMethod
+			.getDescendantsOfKind(SyntaxKind.CallExpression)
+			.find(call => call.getExpression().getText() === "this._frame.$$eval")
+	);
+	evaluateAllCall.addArgument("isolatedContext");
 }
