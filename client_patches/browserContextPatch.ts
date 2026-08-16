@@ -53,12 +53,12 @@ export function patchBrowserContext(project: Project) {
 	{
 		let sourceText = browserContextSourceFile.getFullText();
 		sourceText = sourceText.replace(
-			"dialog.accept({}).catch(() => {});",
-			"dialogObject._wrapApiCall(() => dialog.accept({}).catch(() => {}), { internal: true });"
+			"dialog.accept({}, kNoTimeout).catch(() => {});",
+			"dialogObject._wrapApiCall(() => dialog.accept({}, kNoTimeout).catch(() => {}), { internal: true });"
 		);
 		sourceText = sourceText.replace(
-			"dialog.dismiss().catch(() => {});",
-			"dialogObject._wrapApiCall(() => dialog.dismiss().catch(() => {}), { internal: true });"
+			"dialog.dismiss({}, kNoTimeout).catch(() => {});",
+			"dialogObject._wrapApiCall(() => dialog.dismiss({}, kNoTimeout).catch(() => {}), { internal: true });"
 		);
 		browserContextSourceFile.replaceWithText(sourceText);
 	}
