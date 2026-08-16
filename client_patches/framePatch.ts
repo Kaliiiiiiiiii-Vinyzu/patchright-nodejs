@@ -14,13 +14,14 @@ export function patchFrame(project: Project) {
 	// -- waitForURL Method --
 	const waitForURLMethod = frameClass.getMethodOrThrow("waitForURL");
 	waitForURLMethod.setBodyText(`
+	  const waitOptions = options ?? {};
 	  if (urlMatches(this._page?.context()._options.baseURL, this.url(), url))
-	    return await this.waitForLoadState(options.waitUntil, options);
+	    return await this.waitForLoadState(waitOptions.waitUntil, waitOptions);
 	  try {
-	    await this.waitForNavigation({ url, ...options });
+	    await this.waitForNavigation({ url, ...waitOptions });
 	  } catch (error) {
 	    if (urlMatches(this._page?.context()._options.baseURL, this.url(), url)) {
-	      await this.waitForLoadState(options.waitUntil, options);
+	      await this.waitForLoadState(waitOptions.waitUntil, waitOptions);
 	      return;
 	    }
 	    throw error;
